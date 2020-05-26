@@ -17,10 +17,17 @@
 #define MODULE_NAME "FiducialRelocalizer"
 #define LOCTEXT_NAMESPACE "FFiducialRelocalizerModule"
 
+FFiducialRelocalizerModule* FFiducialRelocalizerModule::sharedInstance_ = nullptr;
+
 void FFiducialRelocalizerModule::StartupModule()
 {
     initModule(MODULE_NAME, PLUGIN_VERSION);
-
+    FFiducialRelocalizerModule::sharedInstance_ = this;
+ 
+    locThreshold_ = 3.; // location tolerance -- centimeters
+    rotThreshold_ = 5.; // quaternion tolerance -- ???
+    scaleThreshold_ = 0.1; // scale tolerance, i.e. 10%
+    
     // To log using ReLog plugin, use these macro definitions:
     // DLOG_PLUGIN_ERROR("Error message");
     // DLOG_PLUGIN_WARN("Warning message");
@@ -35,6 +42,29 @@ void FFiducialRelocalizerModule::ShutdownModule()
 {
 	// This function may be called during shutdown to clean up your module.  For modules that support dynamic reloading,
 	// we call this function before unloading the module.
+}
+
+void
+FFiducialRelocalizerModule::setFiducialPoseUpdateThreshold(float locTh, float rotTh,
+                                                           float scaleTh)
+{
+    locThreshold_ = locTh;
+    rotThreshold_ = rotTh;
+    scaleThreshold_ = scaleTh;
+}
+
+void
+FFiducialRelocalizerModule::getFiducialPoseUpdateThreshold(float& locTh, float& rotTh,
+                                                           float& scaleTh) const
+{
+    locTh = locThreshold_;
+    rotTh = rotThreshold_;
+    scaleTh = scaleThreshold_;
+}
+
+FFiducialRelocalizerModule* FFiducialRelocalizerModule::GetSharedInstance()
+{
+    return FFiducialRelocalizerModule::sharedInstance_;
 }
 
 #undef LOCTEXT_NAMESPACE

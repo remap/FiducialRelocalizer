@@ -37,7 +37,16 @@ class FFiducialRelocalizerModule : public FDDBaseModule
 {
 public:
 
+    static FFiducialRelocalizerModule* GetSharedInstance();
+    
 	/** IModuleInterface implementation */
 	virtual void StartupModule() override;
 	virtual void ShutdownModule() override;
+    
+    void setFiducialPoseUpdateThreshold(float locTh, float rotTh, float scaleTh);
+    void getFiducialPoseUpdateThreshold(float& locTh, float& rotTh, float& scaleTh) const;
+    
+private:
+    float rotThreshold_, locThreshold_, scaleThreshold_;
+    static FFiducialRelocalizerModule* sharedInstance_;
 };

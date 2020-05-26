@@ -34,7 +34,8 @@ public class FiducialRelocalizer : ModuleRules
 				"Core",
 				"UMG",
 				"DDBase",
-				"DDLog"
+				"DDLog",
+                "AugmentedReality"
 				// ... add other public dependencies that you statically link with here ...
 			}
 			);
