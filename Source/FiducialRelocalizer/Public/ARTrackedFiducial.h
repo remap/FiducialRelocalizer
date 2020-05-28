@@ -69,8 +69,13 @@ public:
     UFUNCTION(BlueprintCallable)
     void onArAlignmentUpdated();
     
+    UFUNCTION(BlueprintCallable)
+    float timeSinceLastUsed();
+    
+    void setLastUsedTimestamp(FDateTime ts);
+    
 private:
-    FDateTime initTimestamp_;
+    FDateTime initTimestamp_, lastUsed_;
     bool isLastUpdateSignificant_;
     
     UARTrackedImage* trackedImage_;

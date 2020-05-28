@@ -55,6 +55,7 @@ UARTrackedFiducial::init(UARTrackedImage* trackedImage, AFAnchor* fanchor)
     fiducialAnchor_ = fanchor;
     isLastUpdateSignificant_ = true;
     initTimestamp_ = FDateTime::Now();
+    lastUsed_ = FDateTime::Now();
     
     update(trackedImage);
 }
@@ -113,4 +114,16 @@ UARTrackedFiducial::onArAlignmentUpdated()
     // need to update the fiducial because after the alignment
     // change, the image has new coordinates
     //update(trackedImage_);
+}
+
+void
+UARTrackedFiducial::setLastUsedTimestamp(FDateTime ts)
+{
+    lastUsed_ = ts;
+}
+
+float
+UARTrackedFiducial::timeSinceLastUsed()
+{
+    return (FDateTime::Now() - lastUsed_).GetTotalMilliseconds();
 }
