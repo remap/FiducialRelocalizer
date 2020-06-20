@@ -6,6 +6,13 @@
 #include "GameFramework/Actor.h"
 #include "FAnchor.generated.h"
 
+UENUM(BlueprintType)
+enum class FanchorAlignment : uint8  {
+    Unaligned UMETA(DisplayNAme = "Unaligned"),
+    Vertical UMETA(DisplayNAme = "Vertical"),
+    Horizontal UMETA(DisplayNAme = "Horizontal"),
+};
+
 UCLASS()
 class FIDUCIALRELOCALIZER_API AFAnchor : public AActor
 {
@@ -25,6 +32,9 @@ public:
     // specifies whether all other currently loaded levels must be unloaded first
     UPROPERTY(EditInstanceOnly, BlueprintReadOnly)
     bool IsExclusive;
+    
+    UPROPERTY(EditInstanceOnly, BlueprintReadOnly)
+    FanchorAlignment Alignment;
     
 protected:
 	// Called when the game starts or when spawned
