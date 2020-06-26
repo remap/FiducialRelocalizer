@@ -25,10 +25,6 @@ public:
     UPROPERTY(BlueprintReadOnly)
     TArray<UARTrackedFiducial*> EstimationFiducials;
     
-    // active fiducials, added in chronological order
-    UPROPERTY(BlueprintReadOnly)
-    TArray<UARTrackedFiducial*> ActiveFiducialsList;
-    
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
@@ -37,10 +33,10 @@ public:
     
     UFUNCTION(BlueprintCallable)
     void RemoveFiducial(UARTrackedFiducial* fiducial);
-    
-    UFUNCTION(BlueprintCallable)
-    UARTrackedFiducial* getLatestFiducial() const;
 	
+    UFUNCTION(BlueprintCallable)
+    void PickEstimationFiducials();
+    
 protected:
     // Called when the game starts
     virtual void BeginPlay() override;

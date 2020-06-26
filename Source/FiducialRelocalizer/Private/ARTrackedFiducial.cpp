@@ -45,6 +45,9 @@ UARTrackedFiducial::getName() const
     if (fiducialAnchor_)
         return fiducialAnchor_->FiducialName;
     
+    if (trackedImage_)
+        return trackedImage_->GetDetectedImage()->GetFriendlyName();
+    
     return FString();
 }
 

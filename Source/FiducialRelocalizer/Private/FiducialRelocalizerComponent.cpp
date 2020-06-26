@@ -29,9 +29,47 @@ void UFiducialRelocalizerComponent::BeginPlay()
 void UFiducialRelocalizerComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+}
 
+
+UARTrackedFiducial*
+UFiducialRelocalizerComponent::AddNewFiducial(UARTrackedImage* trackedImage, AFAnchor* fanchor)
+{
+    if (trackedImage)
+    {
+        UARTrackedFiducial* trackedFiducial = NewObject<UARTrackedFiducial>(this);
+        
+        trackedFiducial->init(trackedImage, fanchor);
+        ActiveFiducials.Add(trackedFiducial->getName(), trackedFiducial);
+        fiducialsList_.push_back(trackedFiducial);
+        
+        DLOG_MODULE_DEBUG(FiducialRelocalizer, "Added fiducial {} ", TCHAR_TO_ANSI(*trackedFiducial->getName()));
+        
+        return trackedFiducial;
+    }
+    
+    return nullptr;
+}
+
+void
+UFiducialRelocalizerComponent::RemoveFiducial(UARTrackedFiducial* fiducial)
+{
+    if (fiducial)
+    {
+        DLOG_MODULE_DEBUG(FiducialRelocalizer, "Remove fiducial {} ", TCHAR_TO_ANSI(*fiducial->getName()));
+    
+        ActiveFiducials.Remove(fiducial->getName());
+        fiducialsList_.erase(find(fiducialsList_.begin(),
+                                  fiducialsList_.end(),
+                                  fiducial));
+    }
+}
+
+void
+UFiducialRelocalizerComponent::PickEstimationFiducials()
+{
     // building max heap
-	make_heap(fiducialsList_.begin(), fiducialsList_.end(),
+    make_heap(fiducialsList_.begin(), fiducialsList_.end(),
               [](UARTrackedFiducial* f1, UARTrackedFiducial* f2) {
         // f1 < f2 comparison
         return ! (f1->getTimeSinceLastSignificantUpdate() < f2->getTimeSinceLastSignificantUpdate());
@@ -50,46 +88,4 @@ void UFiducialRelocalizerComponent::TickComponent(float DeltaTime, ELevelTick Ti
         }
         pop_heap(fiducialsList_.begin(), fiducialsList_.end()-i);
     }
-}
-
-
-UARTrackedFiducial*
-UFiducialRelocalizerComponent::AddNewFiducial(UARTrackedImage* trackedImage, AFAnchor* fanchor)
-{
-    if (trackedImage)
-    {
-        UARTrackedFiducial* trackedFiducial = NewObject<UARTrackedFiducial>(this);
-        
-        trackedFiducial->init(trackedImage, fanchor);
-        ActiveFiducialsList.Add(trackedFiducial);
-        ActiveFiducials.Add(trackedFiducial->getName(), trackedFiducial);
-        fiducialsList_.push_back(trackedFiducial);
-        
-        return trackedFiducial;
-    }
-    
-    return nullptr;
-}
-
-void
-UFiducialRelocalizerComponent::RemoveFiducial(UARTrackedFiducial* fiducial)
-{
-    if (fiducial)
-    {
-        DLOG_MODULE_DEBUG(FiducialRelocalizer, "Fiducial {} is not tracked anymore", TCHAR_TO_ANSI(*fiducial->getName()));
-    
-        ActiveFiducials.Remove(fiducial->getName());
-        fiducialsList_.erase(find(fiducialsList_.begin(),
-                                  fiducialsList_.end(),
-                                  fiducial));
-    }
-}
-
-UARTrackedFiducial*
-UFiducialRelocalizerComponent::getLatestFiducial() const
-{
-    if (ActiveFiducialsList.Num())
-        return ActiveFiducialsList.Last();
-    
-    return nullptr;
 }
