@@ -22,11 +22,11 @@ public:
 	// Sets default values for this actor's properties
 	AFAnchor();
 
-    UPROPERTY(EditInstanceOnly, BlueprintReadOnly)
+    UPROPERTY(EditInstanceOnly, BlueprintReadWrite)
     FString FiducialName;
     
     // specified which levels to stream in when this fiducial is detected
-    UPROPERTY(EditInstanceOnly, BlueprintReadOnly)
+    UPROPERTY(EditInstanceOnly, BlueprintReadWrite)
     TArray<FName> StreamingLevels;
     
     // specifies whether all other currently loaded levels must be unloaded first
