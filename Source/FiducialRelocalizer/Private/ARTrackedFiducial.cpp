@@ -43,9 +43,6 @@ UARTrackedFiducial::getFovCoverage() const
 FString
 UARTrackedFiducial::getName() const
 {
-    if (fiducialAnchor_)
-        return fiducialAnchor_->FiducialName;
-    
     if (trackedImage_)
         return trackedImage_->GetDetectedImage()->GetFriendlyName();
     
@@ -67,16 +64,19 @@ UARTrackedFiducial::init(UARTrackedImage* trackedImage, AFAnchor* fanchor)
 void
 UARTrackedFiducial::pin()
 {
-    pin_ = UARBlueprintLibrary::PinComponent(nullptr,
-                                             trackedImage_->GetLocalToWorldTransform(),
-                                             trackedImage_,
-                                             FName(*getName()));
-    if (pin_)
-        DLOG_MODULE_DEBUG(FiducialRelocalizer, "Pinned anchor {}",
-                      TCHAR_TO_ANSI(*getName()));
-    else
-        DLOG_MODULE_WARN(FiducialRelocalizer, "Failed to pin anchor {}",
-                         TCHAR_TO_ANSI(*getName()));
+    // TODO: do something about pinning (do we need it at all)
+    // code below doesn't work (fails to pin)
+
+//    pin_ = UARBlueprintLibrary::PinComponent(nullptr,
+//                                             trackedImage_->GetLocalToWorldTransform(),
+//                                             trackedImage_,
+//                                             FName(*getName()));
+//    if (pin_)
+//        DLOG_MODULE_DEBUG(FiducialRelocalizer, "Pinned anchor {}",
+//                      TCHAR_TO_ANSI(*getName()));
+//    else
+//        DLOG_MODULE_WARN(FiducialRelocalizer, "Failed to pin anchor {}",
+//                         TCHAR_TO_ANSI(*getName()));
 }
 
 void
