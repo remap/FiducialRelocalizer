@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "ARTrackable.h"
 #include "FAnchor.h"
+#include "ARPin.h"
 
 #include "ARTrackedFiducial.generated.h"
 
@@ -55,6 +56,15 @@ public:
     void init(UARTrackedImage* trackedImage, AFAnchor* fanchor);
     
     UFUNCTION(BlueprintCallable)
+    void pin();
+    
+    UFUNCTION(BlueprintCallable)
+    bool isPinned() { return pin_ != nullptr; }
+    
+    UFUNCTION(BlueprintCallable)
+    UARPin* getPin() const { return pin_; }
+    
+    UFUNCTION(BlueprintCallable)
     void update(UARTrackedImage* image);
     
     UFUNCTION(BlueprintCallable)
@@ -77,6 +87,8 @@ public:
 private:
     FDateTime initTimestamp_, lastUsed_;
     bool isLastUpdateSignificant_;
+    UARPin *pin_;
+    
     
     UARTrackedImage* trackedImage_;
     AFAnchor* fiducialAnchor_;

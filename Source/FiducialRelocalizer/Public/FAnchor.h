@@ -18,7 +18,9 @@ class FIDUCIALRELOCALIZER_API AFAnchor : public AActor
 {
 	GENERATED_BODY()
 	
-public:	
+public:
+    static FTransform getTransformAligned(FTransform t, FanchorAlignment alignment);
+    
 	// Sets default values for this actor's properties
 	AFAnchor();
 
@@ -36,6 +38,9 @@ public:
     UPROPERTY(EditInstanceOnly, BlueprintReadOnly)
     FanchorAlignment Alignment;
     
+    // returns Actor's transform aligned by the anchor's alignment
+    FTransform getAlignedTransform() const;
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

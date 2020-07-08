@@ -29,3 +29,28 @@ void AFAnchor::Tick(float DeltaTime)
 
 }
 
+FTransform AFAnchor::getAlignedTransform() const
+{
+    return getTransformAligned(GetTransform(), Alignment);
+}
+
+FTransform AFAnchor::getTransformAligned(FTransform t, FanchorAlignment alignment)
+{
+    FTransform aligned = t;
+    FRotator rotator = t.Rotator();
+    
+    if (alignment == FanchorAlignment::Horizontal)
+    {
+        rotator.Pitch = 0;
+        rotator.Roll = 0;
+    }
+    
+    if (alignment == FanchorAlignment::Vertical)
+    {
+        rotator.Pitch = 90;
+    }
+    
+    aligned.SetRotation(FQuat(rotator));
+    
+    return aligned;
+}

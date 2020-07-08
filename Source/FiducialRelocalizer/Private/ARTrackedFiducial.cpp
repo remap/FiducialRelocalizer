@@ -4,6 +4,7 @@
 #include "ARTrackedFiducial.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "FiducialRelocalizer.h"
+#include "ARBlueprintLibrary.h"
 
 FTrackedImageSnapshot FTrackedImageSnapshot::snap(UARTrackedImage* image)
 {
@@ -63,6 +64,20 @@ UARTrackedFiducial::init(UARTrackedImage* trackedImage, AFAnchor* fanchor)
     update(trackedImage);
 }
 
+void
+UARTrackedFiducial::pin()
+{
+    pin_ = UARBlueprintLibrary::PinComponent(nullptr,
+                                             trackedImage_->GetLocalToWorldTransform(),
+                                             trackedImage_,
+                                             FName(*getName()));
+    if (pin_)
+        DLOG_MODULE_DEBUG(FiducialRelocalizer, "Pinned anchor {}",
+                      TCHAR_TO_ANSI(*getName()));
+    else
+        DLOG_MODULE_WARN(FiducialRelocalizer, "Failed to pin anchor {}",
+                         TCHAR_TO_ANSI(*getName()));
+}
 
 void
 UARTrackedFiducial::update(UARTrackedImage* image)
