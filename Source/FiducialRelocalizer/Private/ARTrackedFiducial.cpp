@@ -4,7 +4,6 @@
 #include "ARTrackedFiducial.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "FiducialRelocalizer.h"
-#include "ARBlueprintLibrary.h"
 
 FTrackedImageSnapshot FTrackedImageSnapshot::snap(UARTrackedImage* image)
 {

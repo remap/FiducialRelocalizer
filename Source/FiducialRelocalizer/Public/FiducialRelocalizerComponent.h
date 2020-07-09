@@ -8,7 +8,6 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "ARTrackedFiducial.h"
-#include "ARBlueprintLibrary.h"
 #include "Fanchor.h"
 #include "ARBasePlayerController.h"
 #include "FiducialRelocalizerComponent.generated.h"

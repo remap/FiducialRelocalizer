@@ -7,6 +7,18 @@
 #include "FAnchor.h"
 #include "ARPin.h"
 
+#if PLATFORM_WINDOWS
+
+#include "AllowWindowsPlatformTypes.h"
+#include "ARBlueprintLibrary.h"
+#include "HideWindowsPlatformTypes.h"
+
+#else
+
+#include "ARBlueprintLibrary.h"
+
+#endif
+
 #include "ARTrackedFiducial.generated.h"
 
 USTRUCT(Blueprintable)
