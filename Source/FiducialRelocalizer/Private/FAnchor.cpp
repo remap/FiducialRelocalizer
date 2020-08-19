@@ -18,7 +18,6 @@ void AFAnchor::BeginPlay()
 {
 	Super::BeginPlay();
     
-    DLOG_MODULE_DEBUG(FiducialRelocalizer, "FAnchor {} begin play", TCHAR_TO_ANSI(*FiducialName));
     Tags.Add(FName(*FiducialName));
 }
 
