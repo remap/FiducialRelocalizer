@@ -13,7 +13,11 @@
 #include "FiducialRelocalizerComponent.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FGoBackToLimboDelegate);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnNewPawnEstimation, FString, fiducialName, FTransform, transform, AFAnchor*, fanchor);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(FOnNewPawnEstimation,
+                                               FString, fiducialName,
+                                               FTransform, arAlignment,
+                                               FTransform, fanchorTransform,
+                                               AFAnchor*, fanchor);
 
 UCLASS(Blueprintable, BlueprintType, ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class FIDUCIALRELOCALIZER_API UFiducialRelocalizerComponent : public UActorComponent

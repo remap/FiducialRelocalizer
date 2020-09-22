@@ -39,6 +39,7 @@ public:
     FanchorAlignment Alignment;
     
     // returns Actor's transform aligned by the anchor's alignment
+    UFUNCTION(BlueprintCallable)
     FTransform getAlignedTransform() const;
 
 protected:

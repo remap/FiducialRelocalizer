@@ -229,16 +229,17 @@ UFiducialRelocalizerComponent::UpdatePawnEstimate()
             
             FTransform t = AFAnchor::getTransformAligned(fiducial->getSnapshot().transform_, alignment).Inverse();
             
-            DLOG_MODULE_DEBUG(FiducialRelocalizer, "Set AR alignment. Fanchor {} (transform {})",
-                              TCHAR_TO_ANSI(*fiducial->getName()),
-                              TCHAR_TO_ANSI(*t.ToHumanReadableString()));
-            
-            controller->setArAlignment(t);
+//            DLOG_MODULE_DEBUG(FiducialRelocalizer, "Set AR alignment. Fanchor {} (transform {})",
+//                              TCHAR_TO_ANSI(*fiducial->getName()),
+//                              TCHAR_TO_ANSI(*t.ToHumanReadableString()));
+//
+//            controller->setArAlignment(t);
             
             if (fiducial->getFiducialAnchor())
             {
                 EstimationCounter += 1;
                 OnNewPawnEstimation.Broadcast(fiducial->getName(),
+                                              t,
                                               fiducial->getFiducialAnchor()->getAlignedTransform(),
                                               fiducial->getFiducialAnchor());
             }
