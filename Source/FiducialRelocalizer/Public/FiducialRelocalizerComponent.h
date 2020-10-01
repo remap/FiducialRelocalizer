@@ -18,6 +18,9 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(FOnNewPawnEstimation,
                                                FTransform, arAlignment,
                                                FTransform, fanchorTransform,
                                                AFAnchor*, fanchor);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnFiducialTrackingStateChanged,
+                                            UARTrackedFiducial*, fiducial);
+
 
 UCLASS(Blueprintable, BlueprintType, ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class FIDUCIALRELOCALIZER_API UFiducialRelocalizerComponent : public UActorComponent
@@ -61,8 +64,30 @@ public:
     UPROPERTY(BlueprintCallable, BlueprintAssignable)
     FOnNewPawnEstimation OnNewPawnEstimation;
     
+    UPROPERTY(BlueprintCallable, BlueprintAssignable)
+    FOnFiducialTrackingStateChanged OnFiducialTrackingStateChanged;
+    
     UFUNCTION(BlueprintCallable)
     bool isValidTrackedImage(UARTrackedImage* trackedImage);
+    
+    /**
+     * Scan mode: adds new measurement for a fiducial
+     */
+    UFUNCTION(BlueprintCallable)
+    void NewFiducialMeasurement(UARTrackedFiducial* fiducial);
+    
+    /**
+     * Scan mode: returns average transform for a fiducial based on
+     * previous measurements
+     */
+    UFUNCTION(BlueprintCallable)
+    FTransform GetAverageMeasurement(FString fiducialName) const;
+    
+    /**
+     * Scan mode: returns array of measured fiducials names
+     */
+    UFUNCTION(BlueprintCallable)
+    TArray<FString> GetMeasuredFiducials() const;
     
 protected:
     // Called when the game starts
@@ -72,6 +97,7 @@ private:
     FARSessionStatus lastArSessionStatus_;
     std::vector<UARTrackedFiducial*> fiducialsList_;
     std::map<FString, UARTrackedFiducial*> activeFiducials_;
+    std::map<FString, std::vector<FTrackedImageSnapshot>> measurements_;
     
     void UpdateActiveFiducials();
     void UpdatePawnEstimate();

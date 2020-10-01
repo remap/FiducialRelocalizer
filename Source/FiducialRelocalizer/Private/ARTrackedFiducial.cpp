@@ -51,6 +51,8 @@ UARTrackedFiducial::getName() const
 void
 UARTrackedFiducial::init(UARTrackedImage* trackedImage, AFAnchor* fanchor)
 {
+    prevTrackingState_ = EARTrackingState::Unknown;
+    curTrackingState_ = EARTrackingState::Unknown;
     trackedImage_ = trackedImage;
     fiducialAnchor_ = fanchor;
     isLastUpdateSignificant_ = true;
@@ -81,6 +83,8 @@ UARTrackedFiducial::pin()
 void
 UARTrackedFiducial::update(UARTrackedImage* image)
 {
+    prevTrackingState_ = curTrackingState_;
+    curTrackingState_ = image->GetTrackingState();
     lastSnapshot_ = FTrackedImageSnapshot::snap(image);
     
     float locT, rotT, scaT;

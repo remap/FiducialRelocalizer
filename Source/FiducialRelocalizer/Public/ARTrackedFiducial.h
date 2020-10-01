@@ -94,6 +94,25 @@ public:
     UFUNCTION(BlueprintCallable)
     float timeSinceLastUsed();
     
+    /**
+     * Returns true if, after calling update(), there was a change in tracking state
+     * of underlying augmented image marker, otherwise returns false.
+     */
+    UFUNCTION(BlueprintCallable)
+    bool hasTrackingStateUpdated() const { return prevTrackingState_ != curTrackingState_; }
+    
+    /**
+     * Returns tracking state as it was before calling update().
+     */
+    UFUNCTION(BlueprintCallable)
+    EARTrackingState getPreviousTrackingState() const { return prevTrackingState_; }
+    
+    /***
+     * Returns tracking state as it was set when calling update().
+     */
+    UFUNCTION(BlueprintCallable)
+    EARTrackingState getCurrentTrackingState() const { return curTrackingState_; }
+    
     void setLastUsedTimestamp(FDateTime ts);
     
 private:
@@ -101,7 +120,7 @@ private:
     bool isLastUpdateSignificant_;
     UARPin *pin_;
     
-    
+    EARTrackingState prevTrackingState_, curTrackingState_;
     UARTrackedImage* trackedImage_;
     AFAnchor* fiducialAnchor_;
     FTrackedImageSnapshot lastSnapshot_, lastSignificantUpdate_;

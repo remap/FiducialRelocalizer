@@ -192,6 +192,8 @@ UFiducialRelocalizerComponent::UpdateActiveFiducials()
     set_difference(activeImageNames.begin(), activeImageNames.end(),
                    oldFiducials.begin(), oldFiducials.end(),
                    inserter(activeImageNames, activeImageNames.begin()));
+    std::vector<UARTrackedFiducial*> updatedFiducials;
+    
     for (auto& trackedImage : trackedImages)
     {
         if (!isValidTrackedImage(trackedImage))
@@ -223,7 +225,14 @@ UFiducialRelocalizerComponent::UpdateActiveFiducials()
         {
             AddNewFiducial(trackedImage, getFanchorWithName(imgName));
         }
+        
+        assert(activeFiducials_.find(imgName) != activeFiducials_.end());
+        if (activeFiducials_[imgName]->hasTrackingStateUpdated())
+            updatedFiducials.push_back(activeFiducials_[imgName]);
     }
+    
+    for (auto &f : updatedFiducials)
+        OnFiducialTrackingStateChanged.Broadcast(f);
 }
 
 void
@@ -278,4 +287,53 @@ AFAnchor* UFiducialRelocalizerComponent::getFanchorWithName(FString fanchorName)
                      TCHAR_TO_ANSI(*fanchorName));
     
     return nullptr;
+}
+
+void
+UFiducialRelocalizerComponent::NewFiducialMeasurement(UARTrackedFiducial* fiducial)
+{
+    if (measurements_.find(fiducial->getName()) == measurements_.end())
+        measurements_[fiducial->getName()] = vector<FTrackedImageSnapshot>();
+    
+    measurements_[fiducial->getName()].push_back(fiducial->getSnapshot());
+}
+
+FTransform
+UFiducialRelocalizerComponent::GetAverageMeasurement(FString fiducialName) const
+{
+    FTransform t;
+    
+    if (measurements_.find(fiducialName) != measurements_.end())
+    {
+        size_t len = measurements_.at(fiducialName).size();
+        if (len > 0)
+        {
+            FVector avgLocation = FVector::ZeroVector;
+            FQuat avgQuat = FQuat::Identity;
+            
+            for (auto &s : measurements_.at(fiducialName))
+            {
+                avgLocation += s.transform_.GetLocation();
+                avgQuat += s.transform_.GetRotation();
+            }
+            
+            avgLocation *= 1/float(len);
+            avgQuat *= 1/float(len);
+            
+            t.SetLocation(avgLocation);
+            t.SetRotation(avgQuat);
+        }
+    }
+    
+    return t;
+}
+
+TArray<FString>
+UFiducialRelocalizerComponent::GetMeasuredFiducials() const
+{
+    TArray<FString> arr;
+    for (auto const& it:measurements_)
+        arr.Add(it.first);
+
+    return arr;
 }
