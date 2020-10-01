@@ -143,7 +143,12 @@ UFiducialRelocalizerComponent::UpdateActiveFiducials()
     TArray<UARTrackedImage*> trackedImages = UARBlueprintLibrary::GetAllTrackedImages();
     set<FString> trackedImageNames;
     for (UARTrackedImage* img : trackedImages)
-        trackedImageNames.insert(img->GetDetectedImage()->GetFriendlyName());
+    {
+        if (!img->GetDetectedImage())
+            DLOG_MODULE_ERROR(FiducialRelocalizer, "img->GetDetectedImage() returned NULL");
+        else
+            trackedImageNames.insert(img->GetDetectedImage()->GetFriendlyName());
+    }
     
     set<FString> activeImageNames;
     transform(fiducialsList_.begin(), fiducialsList_.end(),
@@ -193,6 +198,13 @@ UFiducialRelocalizerComponent::UpdateActiveFiducials()
             continue;
         
         // update existing
+        if (!trackedImage->GetDetectedImage())
+        {
+            DLOG_MODULE_ERROR(FiducialRelocalizer, "img->GetDetectedImage() returned NULL. continue loop");
+            continue;
+        }
+        
+        assert(trackedImage->GetDetectedImage());
         FString imgName = trackedImage->GetDetectedImage()->GetFriendlyName();
         if (activeImageNames.find(imgName) != activeImageNames.end())
         {
