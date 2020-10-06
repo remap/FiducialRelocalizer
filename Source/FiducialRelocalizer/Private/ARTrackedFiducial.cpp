@@ -42,10 +42,7 @@ UARTrackedFiducial::getFovCoverage() const
 FString
 UARTrackedFiducial::getName() const
 {
-    if (trackedImage_)
-        return trackedImage_->GetDetectedImage()->GetFriendlyName();
-    
-    return FString();
+    return name_;
 }
 
 void
@@ -53,7 +50,7 @@ UARTrackedFiducial::init(UARTrackedImage* trackedImage, AFAnchor* fanchor)
 {
     prevTrackingState_ = EARTrackingState::Unknown;
     curTrackingState_ = EARTrackingState::Unknown;
-    trackedImage_ = trackedImage;
+    name_ = trackedImage->GetDetectedImage()->GetFriendlyName();
     fiducialAnchor_ = fanchor;
     isLastUpdateSignificant_ = true;
     initTimestamp_ = FDateTime::Now();
@@ -86,6 +83,7 @@ UARTrackedFiducial::update(UARTrackedImage* image)
     prevTrackingState_ = curTrackingState_;
     curTrackingState_ = image->GetTrackingState();
     lastSnapshot_ = FTrackedImageSnapshot::snap(image);
+    name_ = image->GetDetectedImage()->GetFriendlyName();
     
     float locT, rotT, scaT;
     FFiducialRelocalizerModule::GetSharedInstance()->
@@ -128,13 +126,6 @@ UARTrackedFiducial::getFramesSinceLastSignificantUpdate() const
 void
 UARTrackedFiducial::onArAlignmentUpdated()
 {
-    DLOG_MODULE_DEBUG(FiducialRelocalizer, "fiducial {} alignment updated. image transform now: {}",
-                      TCHAR_TO_ANSI(*getName()),
-                      TCHAR_TO_ANSI(*trackedImage_->GetLocalToTrackingTransform().ToString()));
-                      
-    // need to update the fiducial because after the alignment
-    // change, the image has new coordinates
-    //update(trackedImage_);
 }
 
 void

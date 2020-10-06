@@ -61,7 +61,7 @@ UFiducialRelocalizerComponent::GetActiveFiducials() const
 {
     TMap<FString, UARTrackedFiducial*> activeFiducials;
     
-    for (auto it:activeFiducials_)
+    for (auto it:activeFiducialsDict_)
         activeFiducials.Add(it.first, it.second);
     
     return activeFiducials;
@@ -77,8 +77,8 @@ UFiducialRelocalizerComponent::AddNewFiducial(UARTrackedImage* trackedImage, AFA
         trackedFiducial->init(trackedImage, fanchor);
         trackedFiducial->pin();
         
-        activeFiducials_[trackedFiducial->getName()] = trackedFiducial;
-        fiducialsList_.push_back(trackedFiducial);
+        activeFiducialsDict_[trackedFiducial->getName()] = trackedFiducial;
+        activeFiducialsList_.push_back(trackedFiducial);
         
         DLOG_MODULE_DEBUG(FiducialRelocalizer, "Added fiducial {}. Has FAnchor: {}",
                           TCHAR_TO_ANSI(*trackedFiducial->getName()),
@@ -97,10 +97,10 @@ UFiducialRelocalizerComponent::RemoveFiducial(UARTrackedFiducial* fiducial)
     {
         DLOG_MODULE_DEBUG(FiducialRelocalizer, "Remove fiducial {} ", TCHAR_TO_ANSI(*fiducial->getName()));
     
-        fiducialsList_.erase(find(fiducialsList_.begin(),
-                                  fiducialsList_.end(),
+        activeFiducialsList_.erase(find(activeFiducialsList_.begin(),
+                                  activeFiducialsList_.end(),
                                   fiducial));
-        activeFiducials_.erase(fiducial->getName());
+        activeFiducialsDict_.erase(fiducial->getName());
     }
 }
 
@@ -108,7 +108,7 @@ void
 UFiducialRelocalizerComponent::PickEstimationFiducials()
 {
     // building max heap
-    make_heap(fiducialsList_.begin(), fiducialsList_.end(),
+    make_heap(activeFiducialsList_.begin(), activeFiducialsList_.end(),
               [](UARTrackedFiducial* f1, UARTrackedFiducial* f2) {
         // f1 < f2 comparison
         return ! (f1->getTimeSinceLastSignificantUpdate() < f2->getTimeSinceLastSignificantUpdate());
@@ -117,15 +117,15 @@ UFiducialRelocalizerComponent::PickEstimationFiducials()
     EstimationFiducials.Empty();
     
     // pick fiducials for estimation
-    for (int i = 0; i < fiducialsList_.size(); ++i)
+    for (int i = 0; i < activeFiducialsList_.size(); ++i)
     {
-        auto f = fiducialsList_.front();
-        if (f->getTrackedImage()->GetTrackingState() == EARTrackingState::Tracking)
+        auto f = activeFiducialsList_.front();
+        if (f->getCurrentTrackingState() == EARTrackingState::Tracking)
         {
             EstimationFiducials.Add(f);
             f->setLastUsedTimestamp(FDateTime::Now());
         }
-        pop_heap(fiducialsList_.begin(), fiducialsList_.end()-i);
+        pop_heap(activeFiducialsList_.begin(), activeFiducialsList_.end()-i);
     }
 }
 
@@ -141,58 +141,38 @@ void
 UFiducialRelocalizerComponent::UpdateActiveFiducials()
 {
     TArray<UARTrackedImage*> trackedImages = UARBlueprintLibrary::GetAllTrackedImages();
-    set<FString> trackedImageNames;
-    for (UARTrackedImage* img : trackedImages)
-    {
-        if (!img->GetDetectedImage())
-            DLOG_MODULE_ERROR(FiducialRelocalizer, "img->GetDetectedImage() returned NULL");
-        else
-            trackedImageNames.insert(img->GetDetectedImage()->GetFriendlyName());
-    }
-    
-    set<FString> activeImageNames;
-    transform(fiducialsList_.begin(), fiducialsList_.end(),
-              inserter(activeImageNames, activeImageNames.begin()),
-              [](const UARTrackedFiducial* f){ return f->getName(); });
-    
-    set<FString> newFiducials;
-    set_difference(trackedImageNames.begin(), trackedImageNames.end(),
-                   activeImageNames.begin(), activeImageNames.end(),
-                   inserter(newFiducials, newFiducials.begin()));
     set<FString> oldFiducials;
-    set_difference(activeImageNames.begin(), activeImageNames.end(),
-                   trackedImageNames.begin(), trackedImageNames.end(),
-                   inserter(oldFiducials, oldFiducials.begin()));
+    vector<UARTrackedFiducial*> updatedFiducials;
     
-    // remove old fiducials:
-    //  -- add fiducials that won't be tracked again
-    for (auto &f : fiducialsList_)
-        if (f->getTrackedImage()->GetTrackingState() == EARTrackingState::StoppedTracking ||
-            f->getTrackedImage()->GetTrackingState() == EARTrackingState::Unknown)
-        {
-            DLOG_MODULE_TRACE(FiducialRelocalizer,
-                              "fiducial {} has invalid tracking state - {}",
-                              TCHAR_TO_ANSI(*f->getName()),
-                              f->getTrackedImage()->GetTrackingState());
-
-            oldFiducials.insert(f->getName());
-        }
-    
-    if (oldFiducials.size())
     {
-        DLOG_MODULE_DEBUG(FiducialRelocalizer, "{} old fiducials will be deleted",
-                          oldFiducials.size());
-    
-        // remove fiducials that are not tracked anymore
-        for (const FString& imgName : oldFiducials)
-            RemoveFiducial(activeFiducials_.at(imgName));
+        set<FString> trackedImageNames;
+        for (UARTrackedImage* img : trackedImages)
+        {
+            if (!img->GetDetectedImage())
+                DLOG_MODULE_ERROR(FiducialRelocalizer, "img->GetDetectedImage() returned NULL");
+            else
+            {
+                trackedImageNames.insert(img->GetDetectedImage()->GetFriendlyName());
+                DLOG_MODULE_TRACE(FiducialRelocalizer, "tracked image name {} state {}",
+                                  TCHAR_TO_ANSI(*img->GetDetectedImage()->GetFriendlyName()),
+                                  img->GetTrackingState());
+            }
+        }
+        
+        set<FString> activeFiducialsNames;
+        transform(activeFiducialsList_.begin(), activeFiducialsList_.end(),
+                  inserter(activeFiducialsNames, activeFiducialsNames.begin()),
+                  [](const UARTrackedFiducial* f){ return f->getName(); });
+        
+        for (auto &n : activeFiducialsNames)
+            DLOG_MODULE_TRACE(FiducialRelocalizer, "active fiducial name {}",
+                              TCHAR_TO_ANSI(*n));
+        
+        // set old fiducials -- ones that are not present in currently tracked images
+        set_difference(activeFiducialsNames.begin(), activeFiducialsNames.end(),
+                       trackedImageNames.begin(), trackedImageNames.end(),
+                       inserter(oldFiducials, oldFiducials.begin()));
     }
-    
-    // update active fiducials and add new ones
-    set_difference(activeImageNames.begin(), activeImageNames.end(),
-                   oldFiducials.begin(), oldFiducials.end(),
-                   inserter(activeImageNames, activeImageNames.begin()));
-    std::vector<UARTrackedFiducial*> updatedFiducials;
     
     for (auto& trackedImage : trackedImages)
     {
@@ -205,32 +185,66 @@ UFiducialRelocalizerComponent::UpdateActiveFiducials()
             DLOG_MODULE_ERROR(FiducialRelocalizer, "img->GetDetectedImage() returned NULL. continue loop");
             continue;
         }
-        
         assert(trackedImage->GetDetectedImage());
+
         FString imgName = trackedImage->GetDetectedImage()->GetFriendlyName();
-        if (activeImageNames.find(imgName) != activeImageNames.end())
-        {
-            assert(activeFiducials_.find(imgName) != activeFiducials_.end());
-            
-            UARTrackedFiducial *trackedFiducial = activeFiducials_[imgName];
-            
-            assert(trackedFiducial->getTrackedImage()->GetTrackingState() != EARTrackingState::EARTrackingState::StoppedTracking);
-            assert(trackedFiducial->getTrackedImage()->GetTrackingState() != EARTrackingState::EARTrackingState::Unknown);
-            
-            trackedFiducial->update(trackedImage);
-        }
+        bool isTracking = !(trackedImage->GetTrackingState() == EARTrackingState::StoppedTracking ||
+                           trackedImage->GetTrackingState() == EARTrackingState::Unknown);
+        bool isActive = (activeFiducialsDict_.find(imgName) != activeFiducialsDict_.end());
         
-        // add new
-        if (newFiducials.find(imgName) != newFiducials.end())
+        // 0. add unsuable fiducials to oldFiducials
+        if (!isTracking)
         {
-            AddNewFiducial(trackedImage, getFanchorWithName(imgName));
+            if (isActive)
+            {
+                DLOG_MODULE_TRACE(FiducialRelocalizer, "fiducial {} got non-tracking state", TCHAR_TO_ANSI(*imgName));
+                
+                oldFiducials.insert(imgName);
+            }
         }
-        
-        assert(activeFiducials_.find(imgName) != activeFiducials_.end());
-        if (activeFiducials_[imgName]->hasTrackingStateUpdated())
-            updatedFiducials.push_back(activeFiducials_[imgName]);
+        else
+        {
+            // 1. update existing fiducial
+            if (isActive)
+            {
+                UARTrackedFiducial *trackedFiducial = activeFiducialsDict_[imgName];
+                
+                trackedFiducial->update(trackedImage);
+                
+                if (trackedFiducial->hasTrackingStateUpdated())
+                    updatedFiducials.push_back(trackedFiducial);
+            }
+            else // 2. add new fiducial
+            {
+                UARTrackedFiducial *f = AddNewFiducial(trackedImage, getFanchorWithName(imgName));
+                
+                if (f)
+                    updatedFiducials.push_back(f);
+            }
+        }
     }
     
+    // remove old fiducials
+    // TODO: notify about removed fiducials
+    if (oldFiducials.size())
+    {
+        DLOG_MODULE_WARN(FiducialRelocalizer, "{} old fiducials will be deleted",
+                          oldFiducials.size());
+        
+        // remove fiducials that are not tracked anymore
+        for (const FString& imgName : oldFiducials)
+        {
+            if (activeFiducialsDict_.find(imgName) != activeFiducialsDict_.end())
+                RemoveFiducial(activeFiducialsDict_.at(imgName));
+            else
+            {
+                DLOG_MODULE_ERROR(FiducialRelocalizer, "DATA VIOLATION: old fiducial {} not found in active fiducials map",
+                                  TCHAR_TO_ANSI(*imgName));
+            }
+        }
+    }
+    
+    // notify about fiducials with updated tracking status
     for (auto &f : updatedFiducials)
         OnFiducialTrackingStateChanged.Broadcast(f);
 }

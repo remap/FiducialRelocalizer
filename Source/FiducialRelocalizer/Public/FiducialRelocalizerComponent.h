@@ -95,8 +95,8 @@ protected:
     
 private:
     FARSessionStatus lastArSessionStatus_;
-    std::vector<UARTrackedFiducial*> fiducialsList_;
-    std::map<FString, UARTrackedFiducial*> activeFiducials_;
+    std::vector<UARTrackedFiducial*> activeFiducialsList_;
+    std::map<FString, UARTrackedFiducial*> activeFiducialsDict_;
     std::map<FString, std::vector<FTrackedImageSnapshot>> measurements_;
     
     void UpdateActiveFiducials();

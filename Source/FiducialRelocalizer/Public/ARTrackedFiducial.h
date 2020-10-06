@@ -47,9 +47,6 @@ public:
 	~UARTrackedFiducial();
     
     UFUNCTION(BlueprintCallable)
-    UARTrackedImage* getTrackedImage() const { return trackedImage_; }
-    
-    UFUNCTION(BlueprintCallable)
     AFAnchor* getFiducialAnchor() const { return fiducialAnchor_; }
     
     UFUNCTION(BlueprintCallable)
@@ -121,7 +118,7 @@ private:
     UARPin *pin_;
     
     EARTrackingState prevTrackingState_, curTrackingState_;
-    UARTrackedImage* trackedImage_;
+    FString name_;
     AFAnchor* fiducialAnchor_;
     FTrackedImageSnapshot lastSnapshot_, lastSignificantUpdate_;
 };
