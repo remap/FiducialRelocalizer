@@ -153,9 +153,9 @@ UFiducialRelocalizerComponent::UpdateActiveFiducials()
             else
             {
                 trackedImageNames.insert(img->GetDetectedImage()->GetFriendlyName());
-                DLOG_MODULE_TRACE(FiducialRelocalizer, "tracked image name {} state {}",
-                                  TCHAR_TO_ANSI(*img->GetDetectedImage()->GetFriendlyName()),
-                                  img->GetTrackingState());
+//                DLOG_MODULE_TRACE(FiducialRelocalizer, "tracked image name {} state {}",
+//                                  TCHAR_TO_ANSI(*img->GetDetectedImage()->GetFriendlyName()),
+//                                  img->GetTrackingState());
             }
         }
         
@@ -164,9 +164,9 @@ UFiducialRelocalizerComponent::UpdateActiveFiducials()
                   inserter(activeFiducialsNames, activeFiducialsNames.begin()),
                   [](const UARTrackedFiducial* f){ return f->getName(); });
         
-        for (auto &n : activeFiducialsNames)
-            DLOG_MODULE_TRACE(FiducialRelocalizer, "active fiducial name {}",
-                              TCHAR_TO_ANSI(*n));
+//        for (auto &n : activeFiducialsNames)
+//            DLOG_MODULE_TRACE(FiducialRelocalizer, "active fiducial name {}",
+//                              TCHAR_TO_ANSI(*n));
         
         // set old fiducials -- ones that are not present in currently tracked images
         set_difference(activeFiducialsNames.begin(), activeFiducialsNames.end(),
