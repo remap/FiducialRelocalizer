@@ -95,12 +95,18 @@ protected:
     
 private:
     FARSessionStatus lastArSessionStatus_;
+    
     std::vector<UARTrackedFiducial*> activeFiducialsList_;
-    std::map<FString, UARTrackedFiducial*> activeFiducialsDict_;
-    std::map<FString, std::vector<FTrackedImageSnapshot>> measurements_;
+    
+    UPROPERTY()
+    TArray<UARTrackedFiducial*> activeFiducialsArray_; // for keeping UE4 garbage collector happy
+    UPROPERTY()
+    TMap<FString, UARTrackedFiducial*> activeFiducialsDict_;
+    
+    std::map<std::string, std::vector<FTrackedImageSnapshot>> measurements_;
     
     void UpdateActiveFiducials();
     void UpdatePawnEstimate();
     
-    AFAnchor* getFanchorWithName(FString fanchorName);
+    AFAnchor* getFanchorWithName(std::string fanchorName);
 };

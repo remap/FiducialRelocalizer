@@ -61,8 +61,8 @@ UFiducialRelocalizerComponent::GetActiveFiducials() const
 {
     TMap<FString, UARTrackedFiducial*> activeFiducials;
     
-    for (auto it:activeFiducialsDict_)
-        activeFiducials.Add(it.first, it.second);
+    for (auto &it:activeFiducialsDict_)
+        activeFiducials.Add(it.Key, it.Value);
     
     return activeFiducials;
 }
@@ -77,7 +77,8 @@ UFiducialRelocalizerComponent::AddNewFiducial(UARTrackedImage* trackedImage, AFA
         trackedFiducial->init(trackedImage, fanchor);
         trackedFiducial->pin();
         
-        activeFiducialsDict_[trackedFiducial->getName()] = trackedFiducial;
+        activeFiducialsArray_.Add(trackedFiducial);
+        activeFiducialsDict_.Add(trackedFiducial->getName(), trackedFiducial);
         activeFiducialsList_.push_back(trackedFiducial);
         
         DLOG_MODULE_DEBUG(FiducialRelocalizer, "Added fiducial {}. Has FAnchor: {}",
@@ -100,7 +101,8 @@ UFiducialRelocalizerComponent::RemoveFiducial(UARTrackedFiducial* fiducial)
         activeFiducialsList_.erase(find(activeFiducialsList_.begin(),
                                   activeFiducialsList_.end(),
                                   fiducial));
-        activeFiducialsDict_.erase(fiducial->getName());
+        activeFiducialsDict_.Remove(fiducial->getName());
+        activeFiducialsArray_.Remove(fiducial);
     }
 }
 
@@ -141,32 +143,26 @@ void
 UFiducialRelocalizerComponent::UpdateActiveFiducials()
 {
     TArray<UARTrackedImage*> trackedImages = UARBlueprintLibrary::GetAllTrackedImages();
-    set<FString> oldFiducials;
+    set<string> oldFiducials;
     vector<UARTrackedFiducial*> updatedFiducials;
     
     {
-        set<FString> trackedImageNames;
+        set<string> trackedImageNames;
         for (UARTrackedImage* img : trackedImages)
         {
             if (!img->GetDetectedImage())
                 DLOG_MODULE_ERROR(FiducialRelocalizer, "img->GetDetectedImage() returned NULL");
             else
             {
-                trackedImageNames.insert(img->GetDetectedImage()->GetFriendlyName());
-//                DLOG_MODULE_TRACE(FiducialRelocalizer, "tracked image name {} state {}",
-//                                  TCHAR_TO_ANSI(*img->GetDetectedImage()->GetFriendlyName()),
-//                                  img->GetTrackingState());
+                string imgName( TCHAR_TO_ANSI(*img->GetDetectedImage()->GetFriendlyName()));
+                trackedImageNames.insert(imgName);
             }
         }
         
-        set<FString> activeFiducialsNames;
+        set<string> activeFiducialsNames;
         transform(activeFiducialsList_.begin(), activeFiducialsList_.end(),
                   inserter(activeFiducialsNames, activeFiducialsNames.begin()),
-                  [](const UARTrackedFiducial* f){ return f->getName(); });
-        
-//        for (auto &n : activeFiducialsNames)
-//            DLOG_MODULE_TRACE(FiducialRelocalizer, "active fiducial name {}",
-//                              TCHAR_TO_ANSI(*n));
+                  [](const UARTrackedFiducial* f){ return string(TCHAR_TO_ANSI(*f->getName())); });
         
         // set old fiducials -- ones that are not present in currently tracked images
         set_difference(activeFiducialsNames.begin(), activeFiducialsNames.end(),
@@ -187,17 +183,18 @@ UFiducialRelocalizerComponent::UpdateActiveFiducials()
         }
         assert(trackedImage->GetDetectedImage());
 
-        FString imgName = trackedImage->GetDetectedImage()->GetFriendlyName();
+        FString imgNameStr = trackedImage->GetDetectedImage()->GetFriendlyName();
+        string imgName(TCHAR_TO_ANSI(*imgNameStr));
         bool isTracking = !(trackedImage->GetTrackingState() == EARTrackingState::StoppedTracking ||
                            trackedImage->GetTrackingState() == EARTrackingState::Unknown);
-        bool isActive = (activeFiducialsDict_.find(imgName) != activeFiducialsDict_.end());
+        bool isActive = activeFiducialsDict_.Contains(imgNameStr);
         
         // 0. add unsuable fiducials to oldFiducials
         if (!isTracking)
         {
             if (isActive)
             {
-                DLOG_MODULE_TRACE(FiducialRelocalizer, "fiducial {} got non-tracking state", TCHAR_TO_ANSI(*imgName));
+                DLOG_MODULE_TRACE(FiducialRelocalizer, "fiducial {} got non-tracking state", imgName);
                 
                 oldFiducials.insert(imgName);
             }
@@ -207,7 +204,7 @@ UFiducialRelocalizerComponent::UpdateActiveFiducials()
             // 1. update existing fiducial
             if (isActive)
             {
-                UARTrackedFiducial *trackedFiducial = activeFiducialsDict_[imgName];
+                UARTrackedFiducial *trackedFiducial = activeFiducialsDict_[imgNameStr];
                 
                 trackedFiducial->update(trackedImage);
                 
@@ -232,14 +229,15 @@ UFiducialRelocalizerComponent::UpdateActiveFiducials()
                           oldFiducials.size());
         
         // remove fiducials that are not tracked anymore
-        for (const FString& imgName : oldFiducials)
+        for (const string& imgName : oldFiducials)
         {
-            if (activeFiducialsDict_.find(imgName) != activeFiducialsDict_.end())
-                RemoveFiducial(activeFiducialsDict_.at(imgName));
+            FString imgNameStr(imgName.c_str());
+            if ( activeFiducialsDict_.Contains(imgNameStr))
+                RemoveFiducial(activeFiducialsDict_[imgNameStr]);
             else
             {
                 DLOG_MODULE_ERROR(FiducialRelocalizer, "DATA VIOLATION: old fiducial {} not found in active fiducials map",
-                                  TCHAR_TO_ANSI(*imgName));
+                                  imgName);
             }
         }
     }
@@ -264,12 +262,6 @@ UFiducialRelocalizerComponent::UpdatePawnEstimate()
             
             FTransform t = AFAnchor::getTransformAligned(fiducial->getSnapshot().transform_, alignment).Inverse();
             
-//            DLOG_MODULE_DEBUG(FiducialRelocalizer, "Set AR alignment. Fanchor {} (transform {})",
-//                              TCHAR_TO_ANSI(*fiducial->getName()),
-//                              TCHAR_TO_ANSI(*t.ToHumanReadableString()));
-//
-//            controller->setArAlignment(t);
-            
             if (fiducial->getFiducialAnchor())
             {
                 EstimationCounter += 1;
@@ -282,23 +274,23 @@ UFiducialRelocalizerComponent::UpdatePawnEstimate()
     }
 }
 
-AFAnchor* UFiducialRelocalizerComponent::getFanchorWithName(FString fanchorName)
+AFAnchor* UFiducialRelocalizerComponent::getFanchorWithName(string fanchorName)
 {
-    FName tag(*fanchorName);
+    FName tag(fanchorName.c_str());
     TArray<AActor*> outActors;
     
-    UGameplayStatics::GetAllActorsWithTag(GetWorld(), FName(*fanchorName), outActors);
+    UGameplayStatics::GetAllActorsWithTag(GetWorld(), FName(fanchorName.c_str()), outActors);
     
     if (outActors.Num())
     {
         if (outActors.Num() > 1)
             DLOG_MODULE_WARN(FiducialRelocalizer, "found more than one fanchor matching {}",
-                             TCHAR_TO_ANSI(*fanchorName));
+                             fanchorName);
         return Cast<AFAnchor>(outActors[0]);
     }
     
     DLOG_MODULE_WARN(FiducialRelocalizer, "fanchor {} was not found",
-                     TCHAR_TO_ANSI(*fanchorName));
+                     fanchorName);
     
     return nullptr;
 }
@@ -306,10 +298,10 @@ AFAnchor* UFiducialRelocalizerComponent::getFanchorWithName(FString fanchorName)
 void
 UFiducialRelocalizerComponent::NewFiducialMeasurement(UARTrackedFiducial* fiducial)
 {
-    if (measurements_.find(fiducial->getName()) == measurements_.end())
-        measurements_[fiducial->getName()] = vector<FTrackedImageSnapshot>();
+    if (measurements_.find(TCHAR_TO_ANSI(*fiducial->getName())) == measurements_.end())
+        measurements_[TCHAR_TO_ANSI(*fiducial->getName())] = vector<FTrackedImageSnapshot>();
     
-    measurements_[fiducial->getName()].push_back(fiducial->getSnapshot());
+    measurements_[TCHAR_TO_ANSI(*fiducial->getName())].push_back(fiducial->getSnapshot());
 }
 
 FTransform
@@ -317,15 +309,15 @@ UFiducialRelocalizerComponent::GetAverageMeasurement(FString fiducialName) const
 {
     FTransform t;
     
-    if (measurements_.find(fiducialName) != measurements_.end())
+    if (measurements_.find(TCHAR_TO_ANSI(*fiducialName)) != measurements_.end())
     {
-        size_t len = measurements_.at(fiducialName).size();
+        size_t len = measurements_.at(TCHAR_TO_ANSI(*fiducialName)).size();
         if (len > 0)
         {
             FVector avgLocation = FVector::ZeroVector;
             FQuat avgQuat = FQuat::Identity;
             
-            for (auto &s : measurements_.at(fiducialName))
+            for (auto &s : measurements_.at(TCHAR_TO_ANSI(*fiducialName)))
             {
                 avgLocation += s.transform_.GetLocation();
                 avgQuat += s.transform_.GetRotation();
@@ -347,7 +339,7 @@ UFiducialRelocalizerComponent::GetMeasuredFiducials() const
 {
     TArray<FString> arr;
     for (auto const& it:measurements_)
-        arr.Add(it.first);
+        arr.Add(FString(it.first.c_str()));
 
     return arr;
 }

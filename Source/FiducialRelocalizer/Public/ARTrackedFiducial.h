@@ -113,12 +113,27 @@ public:
     void setLastUsedTimestamp(FDateTime ts);
     
 private:
-    FDateTime initTimestamp_, lastUsed_;
     bool isLastUpdateSignificant_;
+    EARTrackingState prevTrackingState_, curTrackingState_;
+    
+    UPROPERTY()
+    FDateTime initTimestamp_;
+    
+    UPROPERTY()
+    FDateTime lastUsed_;
+    
+    UPROPERTY()
     UARPin *pin_;
     
-    EARTrackingState prevTrackingState_, curTrackingState_;
+    UPROPERTY()
     FString name_;
+    
+    UPROPERTY()
     AFAnchor* fiducialAnchor_;
-    FTrackedImageSnapshot lastSnapshot_, lastSignificantUpdate_;
+    
+    UPROPERTY()
+    FTrackedImageSnapshot lastSnapshot_;
+    
+    UPROPERTY()
+    FTrackedImageSnapshot lastSignificantUpdate_;
 };
