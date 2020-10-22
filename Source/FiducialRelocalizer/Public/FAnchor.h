@@ -32,7 +32,7 @@ public:
     TArray<FName> StreamingLevels;
     
     // specifies whether all other currently loaded levels must be unloaded first
-    UPROPERTY(EditInstanceOnly, BlueprintReadOnly)
+    UPROPERTY(EditInstanceOnly, BlueprintReadWrite)
     bool IsExclusive;
     
     UPROPERTY(EditInstanceOnly, BlueprintReadOnly)
