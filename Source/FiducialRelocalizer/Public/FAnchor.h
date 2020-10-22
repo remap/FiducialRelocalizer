@@ -35,6 +35,9 @@ public:
     UPROPERTY(EditInstanceOnly, BlueprintReadWrite)
     bool IsExclusive;
     
+    UPROPERTY(EditInstanceOnly, BlueprintReadWrite)
+    bool IsActive;
+    
     UPROPERTY(EditInstanceOnly, BlueprintReadOnly)
     FanchorAlignment Alignment;
     

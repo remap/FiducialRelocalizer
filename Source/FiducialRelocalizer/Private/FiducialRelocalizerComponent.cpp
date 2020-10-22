@@ -81,9 +81,10 @@ UFiducialRelocalizerComponent::AddNewFiducial(UARTrackedImage* trackedImage, AFA
         activeFiducialsDict_.Add(trackedFiducial->getName(), trackedFiducial);
         activeFiducialsList_.push_back(trackedFiducial);
         
-        DLOG_MODULE_DEBUG(FiducialRelocalizer, "Added fiducial {}. Has FAnchor: {}",
+        DLOG_MODULE_DEBUG(FiducialRelocalizer, "Added fiducial {}. Has FAnchor: {}, active: {}",
                           TCHAR_TO_ANSI(*trackedFiducial->getName()),
-                          (fanchor ? "YES" : "NO"));
+                          (fanchor ? "YES" : "NO"),
+                          (fanchor->IsActive ? "YES" : "NO"));
         
         return trackedFiducial;
     }
@@ -122,7 +123,9 @@ UFiducialRelocalizerComponent::PickEstimationFiducials()
     for (int i = 0; i < activeFiducialsList_.size(); ++i)
     {
         auto f = activeFiducialsList_.front();
-        if (f->getCurrentTrackingState() == EARTrackingState::Tracking)
+        if (f->getCurrentTrackingState() == EARTrackingState::Tracking &&
+            f->getFiducialAnchor() &&
+            f->getFiducialAnchor()->IsActive)
         {
             EstimationFiducials.Add(f);
             f->setLastUsedTimestamp(FDateTime::Now());
@@ -286,6 +289,7 @@ AFAnchor* UFiducialRelocalizerComponent::getFanchorWithName(string fanchorName)
         if (outActors.Num() > 1)
             DLOG_MODULE_WARN(FiducialRelocalizer, "found more than one fanchor matching {}",
                              fanchorName);
+        
         return Cast<AFAnchor>(outActors[0]);
     }
     
